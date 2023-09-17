@@ -1,22 +1,20 @@
 <script setup>
 import { formatDate } from '../../helper.js';
+import { ref, onMounted } from 'vue';
 import { useToastr } from '../../toastr.js';
-import {ref} from 'vue';
-
-
+import axios from 'axios';
 
 const toastr = useToastr();
 
-const userr = ref({
-    role: 'dd', // Assurez-vous que user.role est initialisé avec la valeur souhaitée ici
-});
 const props = defineProps({
     user: Object,
     index: Number,
-
+    selectAll: Boolean,
 });
-const userIdBeingDeleted = ref(null);
 
+let selectedRole = ref(null); // Initialisez selectedRole à null
+
+const emit = defineEmits(['userDeleted', 'editUser', 'confirmUserDeletion']);
 
 const roles = ref([
     {
@@ -29,86 +27,41 @@ const roles = ref([
     }
 ]);
 
-const emit = defineEmits(['userDeleted','editUser']);
-
-const confirmUserDeletion = (user) => {
-    userIdBeingDeleted.value = user.id;
-    console.log('userIdBeingDeleted:', userIdBeingDeleted.value); // Ajoutez cette ligne
-    $('#deleteUserModal').modal('show');
-};
-
 const changeRole = (user, role) => {
-    axios.put(`/api/users/${user.id}/change-role`, {
+    axios.patch(`/api/users/${user.id}/change-role`, {
         role: role,
     })
     .then(() => {
         toastr.success('Role changed successfully!');
-        // Mettre à jour le rôle côté client si nécessaire
-        user.role = role; // Mettez à jour le rôle dans l'objet utilisateur côté client
     })
-    .catch((error) => {
-        console.error('Error changing role:', error);
-        toastr.error('Failed to change role.');
-    });
-}
-
-
-
-const deleteUser = () => {
-    axios.delete(`/api/users/${userIdBeingDeleted.value}`)
-        .then((response) => {
-            $('#deleteUserModal').modal('hide');
-            toastr.success('User deleted successfully!');
-            emit('userDeleted',userIdBeingDeleted.value);
-            
-        })
 };
 
-const editUser = (user) => {
-        emit('editUser',user);
-    };
+const toggleSelection = () => {
+    emit('toggleSelection', props.user);
+}
 
+// Utilisez onMounted pour définir selectedRole après que user soit défini
+onMounted(() => {
+    selectedRole.value = props.user.role;
+});
 </script>
 <template>
-
     <tr>
-        <td> {{ index + 1 }} </td>
-        <td> {{ user.name }} </td>
-        <td> {{ user.email }} </td>
-        <td> {{ formatDate(user.created_at) }} </td>
-        <td>
-            <select class="form-control" @change="changeRole(user, $event.target.value)" v-model="user.role">
-                <option v-for="role in roles" :value="role.value" :selected="(role.value === user.role)">
-                    {{ role.name }}
-                </option>
+        <td><input type="checkbox" :checked="selectAll" @change="toggleSelection" /></td>
+        <td>{{ index + 1 }}</td>
+        <td>{{ user.name }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{user.created_at ? formatDate(user.created_at) : ''}}</td>
+    
+       
+          <td>
+            <select class="form-control" v-model="selectedRole" @change="changeRole(user, $event.target.value)">
+                <option v-for="role in roles" :value="role.value" >{{ role.name }}</option>
             </select>
         </td>
-        <td>{{ user.role }}</td>
         <td>
-            <a href="#" @click.prevent="editUser(user)"><i class="fa fa-edit"></i></a>
-            <a href="#" @click.prevent="confirmUserDeletion(user)"><i class="fa fa-trash text-danger ml-2"></i></a>
+            <a href="#" @click.prevent="$emit('editUser', user)"><i class="fa fa-edit"></i></a>
+            <a href="#" @click.prevent="$emit('confirmUserDeletion', user.id)"><i class="fa fa-trash text-danger ml-2"></i></a>
         </td>
     </tr>
-    <div class="modal fade" id="deleteUserModal" data-backdrop="static" tabindex="-1" role="dialog"
-        aria-labelledby="staticBackdropLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="staticBackdropLabel">
-                        <span>Delete User</span>
-                    </h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <h5>Are you sure you want to delete this user ?</h5>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button @click.prevent="deleteUser" type="button" class="btn btn-primary">Delete User</button>
-                </div>
-            </div>
-        </div>
-    </div>
 </template>

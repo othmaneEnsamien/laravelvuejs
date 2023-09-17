@@ -11,16 +11,8 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::latest()->get()
-            ->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role'  => $user->role,
-                    'created_at' => $user->created_at->format(config('app.date_format'))
-                ];
-            });
+        $users = User::latest()->paginate(2);
+
         return response()->json($users); // Utilisez response()->json pour retourner des données JSON
     }
 
@@ -82,8 +74,15 @@ class UserController extends Controller
         $users =
             User::where('name', 'LIKE', "%{$searchQuery}%")
             ->orWhere('email', 'LIKE', "%{$searchQuery}%")
-            ->get();
+            ->paginate(2);
 
         return response()->json($users);
+    }
+
+    public function bulkDelete()
+    {
+        $ids = request('ids');
+        User::whereIn('id', $ids)->delete();
+        return response()->json(['message' => 'Users deleted']);
     }
 }
