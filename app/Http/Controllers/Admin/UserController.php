@@ -11,9 +11,14 @@ class UserController extends Controller
 
     public function index()
     {
-        $users = User::latest()->paginate(2);
+        $users = User::query()
+            ->when(request('query'), function ($query, $searchQuery) {
+                $query->where('name', 'like', "%{$searchQuery}%");
+            })
+            ->latest()
+            ->paginate(5);
 
-        return response()->json($users); // Utilisez response()->json pour retourner des données JSON
+        return $users; // Utilisez response()->json pour retourner des données JSON
     }
 
     public function store()
