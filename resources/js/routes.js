@@ -6,6 +6,8 @@ import UserList from './pages/Users/UserList.vue';
 import AppointmentForm from './pages/appointments/AppointmentForm.vue';
 import Login from './pages/auth/Login.vue';
 
+
+
 export default
     [
         {

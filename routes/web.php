@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\AppointmentStatusController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\DashboardStatusController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ApplicationController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(
     function () {
+
+        Route::get('/api/profile', [ProfileController::class, 'index']);
+        Route::put('/api/profile', [ProfileController::class, 'update']);
+        Route::post('/api/upload-profile-image', [ProfileController::class, 'uploadImage']);
+        Route::post('/api/change-user-password', [ProfileController::class, 'changePassword']);
 
         Route::get('/api/stats/appointments', [DashboardStatusController::class, 'appointments']);
         Route::get('/api/stats/users', [DashboardStatusController::class, 'users']);
